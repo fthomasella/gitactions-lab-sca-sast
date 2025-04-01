@@ -1,0 +1,3 @@
+Flask==1.1.2  # Versão antiga com vulnerabilidades (CVE-2021-23336)
+requests==2.22.0  # Versão suscetível a SSRF (CVE-2018-18074)
+PyYAML==5.3.1  # Versão com execução de código remota (CVE-2020-1747)

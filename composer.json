@@ -1,0 +1,6 @@
+{
+    "require": {
+        "laravel/framework": "5.8.35", // Vulnerabilidade de RCE (CVE-2021-3129)
+        "phpseclib/phpseclib": "2.0.11" // Criptografia fraca (CVE-2018-1000164)
+    }
+}
