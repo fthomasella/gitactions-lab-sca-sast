@@ -7,32 +7,94 @@ jobs:
     runs-on: ubuntu-latest
     name: Dependency Check Test
     steps:
+      # Checkout do repositório
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Listar conteúdo do diretório para verificação
       - name: List directory contents
         run: ls -la
 
+      # Configurar JDK 11 (necessário para Dependency-Check e Java)
       - name: Set up JDK 11
         uses: actions/setup-java@v4
         with:
           java-version: '11'
           distribution: 'temurin'
 
+      # Verificar instalação do Java
       - name: Verify Java installation
         run: |
           echo "JAVA_HOME is set to: $JAVA_HOME"
           java -version
           which java
 
-      - name: Set up Node.js (optional for Node.js projects)
+      # Configurar Go (para go.mod)
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.18'
+
+      # Configurar Node.js (para package.json e index.ts)
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install npm dependencies (optional)
-        run: npm install || echo "Nenhum package.json encontrado"
+      # Configurar Python (para requirements.txt e app.py)
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
+      # Configurar Ruby (para Gemfile e app.rb)
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+          bundler-cache: true
+
+      # Configurar PHP (para composer.json e index.php)
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      # Compilar e gerar arquivos de lock (quando aplicável)
+      - name: Compile Go
+        run: |
+          go mod tidy
+          go build -o go-app
+        continue-on-error: true
+
+      - name: Install and Compile JavaScript/TypeScript
+        run: |
+          npm install || echo "Nenhum package.json encontrado"
+          npm install -g typescript
+          tsc index.ts || echo "Falha ao compilar TypeScript"
+        continue-on-error: true
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt || echo "Falha ao instalar dependências Python"
+        continue-on-error: true
+
+      - name: Install Ruby dependencies
+        run: |
+          bundle install || echo "Falha ao instalar dependências Ruby"
+        continue-on-error: true
+
+      - name: Install PHP dependencies
+        run: |
+          composer install || echo "Falha ao instalar dependências PHP"
+        continue-on-error: true
+
+      - name: Compile Java
+        run: |
+          mvn clean install -f pom.xml -DskipTests || echo "Falha ao compilar Java"
+        continue-on-error: true
+
+      # Executar Dependency-Check
       - name: Run Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
         env:
@@ -40,13 +102,14 @@ jobs:
         with:
           project: 'dependency-check-poc'
           path: '.'
-          format: 'HTML'
+          format: 'HTML,JSON'  # Gera relatórios em HTML e JSON
           out: 'reports'
           args: >
             --failOnCVSS 7
             --enableRetired
             --noupdate
 
+      # Fazer upload do relatório
       - name: Upload Dependency Check Report
         if: always()
         uses: actions/upload-artifact@v4
