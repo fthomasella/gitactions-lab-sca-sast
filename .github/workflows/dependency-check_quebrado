@@ -51,7 +51,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.0.7'
+          ruby-version: '3.0'
           bundler-cache: true
 
       # Configurar PHP (para composer.json e index.php)
@@ -63,9 +63,8 @@ jobs:
       # Compilar e gerar arquivos de lock (quando aplicável)
       - name: Compile Go
         run: |
-          go mod tidy || echo "Falha ao executar go mod tidy"
-          go build -o go-app || echo "Falha ao compilar Go"
-          ls -la
+          go mod tidy
+          go build -o go-app
         continue-on-error: true
 
       - name: Install and Compile JavaScript/TypeScript
@@ -73,36 +72,27 @@ jobs:
           npm install || echo "Nenhum package.json encontrado"
           npm install -g typescript
           tsc index.ts || echo "Falha ao compilar TypeScript"
-          ls -la
         continue-on-error: true
 
       - name: Install Python dependencies
         run: |
           pip install -r requirements.txt || echo "Falha ao instalar dependências Python"
-          ls -la
         continue-on-error: true
 
       - name: Install Ruby dependencies
         run: |
-          bundle install || (echo "Falha ao instalar dependências Ruby" && bundle install --verbose && exit 1)
-          ls -la
+          bundle install || echo "Falha ao instalar dependências Ruby"
         continue-on-error: true
 
       - name: Install PHP dependencies
         run: |
           composer install || echo "Falha ao instalar dependências PHP"
-          ls -la
         continue-on-error: true
 
       - name: Compile Java
         run: |
           mvn clean install -f pom.xml -DskipTests || echo "Falha ao compilar Java"
-          ls -la
         continue-on-error: true
-
-      # Criar a pasta de relatórios
-      - name: Create reports directory
-        run: mkdir -p reports
 
       # Executar Dependency-Check
       - name: Run Dependency Check
@@ -112,16 +102,12 @@ jobs:
         with:
           project: 'dependency-check-poc'
           path: '.'
-          format: 'HTML,JSON'
+          format: 'HTML,JSON'  # Gera relatórios em HTML e JSON
           out: 'reports'
           args: >
             --failOnCVSS 7
             --enableRetired
             --noupdate
-
-      # Listar conteúdo da pasta de relatórios para depuração
-      - name: List reports directory contents
-        run: ls -la reports
 
       # Fazer upload do relatório
       - name: Upload Dependency Check Report
